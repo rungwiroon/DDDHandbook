@@ -7,6 +7,8 @@ using Vogen;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<IOrderRepository, InMemoryOrderRepository>();
+builder.Services.AddSingleton<IKitchenTicketRepository, InMemoryKitchenTicketRepository>();
+builder.Services.AddSingleton<IDomainEventDispatcher, OrderSentToKitchenDispatcher>();
 builder.Services.AddSingleton<OrderCommandService>();
 
 var app = builder.Build();

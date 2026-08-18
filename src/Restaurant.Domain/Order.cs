@@ -8,6 +8,7 @@ public sealed class Order
     private const string EmptyOrderCode = "order.empty";
 
     private readonly List<OrderLine> _lines = [];
+    private readonly Queue<IDomainEvent> _domainEvents = [];
 
     private Order(OrderId id, TableNumber tableNumber)
     {
@@ -23,6 +24,8 @@ public sealed class Order
     public OrderStatus Status { get; private set; }
 
     public IReadOnlyList<OrderLine> Lines => _lines.AsReadOnly();
+
+    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.ToArray();
 
     public Money Total => Money.From(_lines.Sum(line => line.Subtotal.Value));
 
@@ -70,6 +73,14 @@ public sealed class Order
         }
 
         Status = OrderStatus.SentToKitchen;
+        _domainEvents.Enqueue(OrderSentToKitchen.From(this));
+    }
+
+    public IReadOnlyList<IDomainEvent> DequeueDomainEvents()
+    {
+        var events = _domainEvents.ToArray();
+        _domainEvents.Clear();
+        return events;
     }
 
     private void EnsureDraft()

@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Restaurant.Application;
 
 namespace Restaurant.IntegrationTests;
 
@@ -84,6 +86,34 @@ public sealed class OrderEndpointsTests(WebApplicationFactory<Program> factory) 
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Equal("order.not-draft", await ReadErrorCode(response));
+    }
+
+    [Fact]
+    public async Task Sending_a_populated_order_creates_exactly_one_kitchen_ticket()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        await AddItem(client, orderId, "Pad Thai");
+
+        var response = await client.PostAsync($"/orders/{orderId}/send-to-kitchen", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var tickets = factory.Services.GetRequiredService<IKitchenTicketRepository>().All();
+        var ticket = Assert.Single(tickets, ticket => ticket.OrderId.Value == orderId);
+        Assert.Single(ticket.Lines);
+    }
+
+    [Fact]
+    public async Task Sending_an_empty_order_creates_no_kitchen_ticket()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        var ticketsBefore = factory.Services.GetRequiredService<IKitchenTicketRepository>().All().Count;
+
+        var response = await client.PostAsync($"/orders/{orderId}/send-to-kitchen", null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(ticketsBefore, factory.Services.GetRequiredService<IKitchenTicketRepository>().All().Count);
     }
 
     [Fact]

@@ -105,6 +105,35 @@ public sealed class OrderTests
     }
 
     [Fact]
+    public void Send_to_kitchen_queues_one_immutable_event_with_order_facts()
+    {
+        var order = CreateOrder();
+        var menuItemId = MenuItemId.From(Guid.NewGuid());
+        order.AddItem(menuItemId, "Pad Thai", Money.From(85m), Quantity.From(2));
+
+        order.SendToKitchen();
+
+        var domainEvent = Assert.IsType<OrderSentToKitchen>(Assert.Single(order.DomainEvents));
+        Assert.Equal(order.Id, domainEvent.OrderId);
+        Assert.Equal(order.TableNumber, domainEvent.TableNumber);
+        var line = Assert.Single(domainEvent.Lines);
+        Assert.Equal(menuItemId, line.MenuItemId);
+        Assert.Equal(2, line.Quantity.Value);
+        Assert.Single(order.DequeueDomainEvents());
+        Assert.Empty(order.DomainEvents);
+    }
+
+    [Fact]
+    public void Empty_order_does_not_queue_a_domain_event()
+    {
+        var order = CreateOrder();
+
+        Assert.Throws<DomainRuleViolationException>(order.SendToKitchen);
+
+        Assert.Empty(order.DomainEvents);
+    }
+
+    [Fact]
     public void Sent_order_rejects_add_remove_and_send_operations()
     {
         var order = CreateOrder();
