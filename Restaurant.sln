@@ -1,0 +1,54 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Restaurant.Domain", "src\\Restaurant.Domain\\Restaurant.Domain.csproj", "{C3E558C8-31F2-4403-8B43-C083A5A3E820}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Restaurant.Application", "src\\Restaurant.Application\\Restaurant.Application.csproj", "{12D954D3-3127-463F-89A6-E4FA0A3E8C10}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Restaurant.Infrastructure", "src\\Restaurant.Infrastructure\\Restaurant.Infrastructure.csproj", "{91BB5F94-D9B5-4C65-AE1F-CA903C70F7FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Restaurant.Api", "src\\Restaurant.Api\\Restaurant.Api.csproj", "{68F8B6F8-FD96-45D2-80D6-D49E96EA5915}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Restaurant.Domain.Tests", "tests\\Restaurant.Domain.Tests\\Restaurant.Domain.Tests.csproj", "{17CA6E83-0523-475F-B2DC-1D5BB3F307D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Restaurant.Application.Tests", "tests\\Restaurant.Application.Tests\\Restaurant.Application.Tests.csproj", "{062CFA2A-B690-4AE1-A92B-E53F660137D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Restaurant.IntegrationTests", "tests\\Restaurant.IntegrationTests\\Restaurant.IntegrationTests.csproj", "{89EE64C9-9A5B-4C42-8BCE-07951BB08201}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C3E558C8-31F2-4403-8B43-C083A5A3E820}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3E558C8-31F2-4403-8B43-C083A5A3E820}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3E558C8-31F2-4403-8B43-C083A5A3E820}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3E558C8-31F2-4403-8B43-C083A5A3E820}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12D954D3-3127-463F-89A6-E4FA0A3E8C10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12D954D3-3127-463F-89A6-E4FA0A3E8C10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12D954D3-3127-463F-89A6-E4FA0A3E8C10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12D954D3-3127-463F-89A6-E4FA0A3E8C10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91BB5F94-D9B5-4C65-AE1F-CA903C70F7FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91BB5F94-D9B5-4C65-AE1F-CA903C70F7FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91BB5F94-D9B5-4C65-AE1F-CA903C70F7FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91BB5F94-D9B5-4C65-AE1F-CA903C70F7FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68F8B6F8-FD96-45D2-80D6-D49E96EA5915}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68F8B6F8-FD96-45D2-80D6-D49E96EA5915}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68F8B6F8-FD96-45D2-80D6-D49E96EA5915}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68F8B6F8-FD96-45D2-80D6-D49E96EA5915}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17CA6E83-0523-475F-B2DC-1D5BB3F307D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17CA6E83-0523-475F-B2DC-1D5BB3F307D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17CA6E83-0523-475F-B2DC-1D5BB3F307D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17CA6E83-0523-475F-B2DC-1D5BB3F307D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{062CFA2A-B690-4AE1-A92B-E53F660137D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{062CFA2A-B690-4AE1-A92B-E53F660137D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{062CFA2A-B690-4AE1-A92B-E53F660137D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{062CFA2A-B690-4AE1-A92B-E53F660137D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89EE64C9-9A5B-4C42-8BCE-07951BB08201}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89EE64C9-9A5B-4C42-8BCE-07951BB08201}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89EE64C9-9A5B-4C42-8BCE-07951BB08201}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89EE64C9-9A5B-4C42-8BCE-07951BB08201}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

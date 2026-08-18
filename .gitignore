@@ -1,0 +1,7 @@
+bin/
+obj/
+.vs/
+TestResults/
+src/restaurant-web/node_modules/
+src/restaurant-web/dist/
+src/restaurant-web/*.tsbuildinfo
