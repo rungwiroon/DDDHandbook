@@ -21,7 +21,7 @@ flowchart LR
   C --> A["Order aggregate"]
 ```
 
-## Vue workflow ของ M3
+## Vue workflow ของบทนี้
 
 หน้าจอเดียวแสดง waiter workflow และ kitchen board เพื่อ demo flow ให้จบ:
 
@@ -66,7 +66,7 @@ Wireframe นี้แสดง state หลักในหน้าเดีย
 | พื้นที่ | Loading | Empty | Error |
 |---|---|---|---|
 | เลือกโต๊ะ / Order detail | disable action ระหว่าง request | ยังไม่เลือกหรือยังไม่สร้าง order | แสดง Problem Details `detail` |
-| Send to kitchen | disable ปุ่มระหว่าง submit | draft ที่ยังไม่มี line ส่งไม่ได้ | แสดง business error เช่น `order.empty` |
+| Send to kitchen | disable ปุ่มระหว่าง submit | draft ที่ยังไม่มี line ส่งไม่ได้ | แสดง business error เช่น `order.empty`; ถ้า `order.concurrency` ให้ reload order |
 | Kitchen board | แสดงสถานะกำลังโหลด | “ยังไม่มีงานในครัว” | ปุ่ม refresh ยังใช้งานได้เพื่อ retry |
 
 Vue validation ช่วยลด round trip เช่น table number ต้องมากกว่า 0 แต่ไม่ได้แทน domain validation. API error โดยเฉพาะ `order.not-draft` ต้องถูกแสดง เพราะผู้ใช้คนอื่นหรือ request อื่นอาจเปลี่ยน order ไปแล้ว.
@@ -93,6 +93,10 @@ Then it shows one ticket with that order's table and line
 Given the API rejects a command with a business error
 When Vue receives the Problem Details response
 Then the UI shows the error detail and leaves the user able to retry when appropriate
+
+Given a waiter submits a stale order version
+When Vue receives `409` with code `order.concurrency`
+Then the UI reloads the order before the waiter retries
 ```
 
 ## ตัวอย่าง Kanban Story สำหรับ SA
@@ -120,4 +124,4 @@ Then the UI shows the error detail and leaves the user able to retry when approp
 
 ## Checkpoint
 
-Integration test ต้องยืนยัน response ของ query ทั้ง order detail, unknown order และ empty/populated kitchen board. Vue test ต้องยืนยัน loading, empty และ business-error state; `npm run build && npm test` และ `dotnet test Restaurant.sln` ต้องผ่านก่อนเพิ่ม persistence ในบท 7.
+Integration test ต้องยืนยัน response ของ query ทั้ง order detail, unknown order และ empty/populated kitchen board. Vue component test ต้องยืนยัน loading, empty และ business-error state; `npm run build && npm test` และ `dotnet test Restaurant.sln` ต้องผ่านก่อนส่งมอบ frontend slice.

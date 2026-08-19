@@ -10,14 +10,22 @@ using Restaurant.Infrastructure;
 
 namespace Restaurant.IntegrationTests;
 
-public sealed class SqliteWebApplicationFactory : WebApplicationFactory<Program>
+public class SqliteWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection = new("Data Source=:memory:");
+
+    public bool FailOutboxProcessing { get; set; }
 
     public IReadOnlyCollection<Restaurant.Domain.KitchenTicket> ReadTickets()
     {
         using var scope = Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<IKitchenTicketRepository>().All();
+    }
+
+    public int ReadPendingOutbox()
+    {
+        using var scope = Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<RestaurantDbContext>().Outbox.Count(message => message.ProcessedUtc == null);
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -34,11 +42,21 @@ public sealed class SqliteWebApplicationFactory : WebApplicationFactory<Program>
             services.AddDbContext<RestaurantDbContext>(options => options.UseSqlite(_connection));
             services.AddScoped<IOrderRepository, EfOrderRepository>();
             services.AddScoped<IKitchenTicketRepository, EfKitchenTicketRepository>();
+            if (FailOutboxProcessing)
+            {
+                services.RemoveAll<IOutboxProcessor>();
+                services.AddScoped<IOutboxProcessor, FailingOutboxProcessor>();
+            }
 
             using var provider = services.BuildServiceProvider();
             using var scope = provider.CreateScope();
             scope.ServiceProvider.GetRequiredService<RestaurantDbContext>().Database.EnsureCreated();
         });
+    }
+
+    private sealed class FailingOutboxProcessor : IOutboxProcessor
+    {
+        public void ProcessPending() => throw new InvalidOperationException("simulated processor failure");
     }
 
     protected override void Dispose(bool disposing)

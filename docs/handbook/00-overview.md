@@ -18,12 +18,28 @@ MVP จบที่ waiter ส่ง order ที่ถูกต้องเข�
 ## Reference implementation
 
 - `Restaurant.Domain` — model และ business rules; อ้างอิงได้เฉพาะ BCL กับ Vogen
-- `Restaurant.Application` — command/query orchestration ในบทถัดไป
-- `Restaurant.Infrastructure` — EF Core, SQLite และ Outbox ในบทหลัง
+- `Restaurant.Application` — command/query orchestration
+- `Restaurant.Infrastructure` — EF Core, SQLite และ Outbox
 - `Restaurant.Api` — ASP.NET Core HTTP API
 - `restaurant-web` — Vue 3 + TypeScript + Vite
 
-ตรวจ M0 ได้ด้วย `dotnet test Restaurant.sln` และใน `src/restaurant-web` ให้รัน `npm run build && npm test`. API มี `GET /health` เพื่อยืนยัน host ก่อนมี business endpoint.
+ตรวจ implementation ได้ด้วย `dotnet test Restaurant.sln` และใน `src/restaurant-web` ให้รัน `npm run build && npm test`. API มี `GET /health` เพื่อยืนยัน host.
+
+## สารบัญ
+
+| บท | เนื้อหา |
+|---|---|
+| 00 | ภาพรวมและวิธีอ่าน handbook |
+| 01 | Requirement สู่ domain language |
+| 02 | ERD เทียบกับ DDD |
+| 03 | Bounded Context และ Aggregate |
+| 04 | Commands และ HTTP API |
+| 05 | Domain Events และ eventual consistency |
+| 06 | Queries และ Vue frontend |
+| 07 | Persistence และ EF Core/SQLite |
+| 08 | Reliability: Outbox, idempotency และ concurrency |
+| 09 | Testing strategy |
+| 10 | Delivery workflow |
 
 ## วิธีอ่าน
 

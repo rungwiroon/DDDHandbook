@@ -9,8 +9,9 @@ public sealed record AddItemToOrder(
     MenuItemId MenuItemId,
     string ItemName,
     Money UnitPrice,
-    Quantity Quantity);
+    Quantity Quantity,
+    int? ExpectedVersion = null);
 
-public sealed record RemoveOrderItem(OrderId OrderId, MenuItemId MenuItemId);
+public sealed record RemoveOrderItem(OrderId OrderId, MenuItemId MenuItemId, int? ExpectedVersion = null);
 
-public sealed record SendOrderToKitchen(OrderId OrderId);
+public sealed record SendOrderToKitchen(OrderId OrderId, int? ExpectedVersion = null);

@@ -14,7 +14,7 @@
 | Send to kitchen | การเปลี่ยนสถานะ business ที่มีผลต่อครัว | ปุ่ม UI หรือ update column ทั่วไป |
 | Kitchen ticket | งานที่ครัวต้องทำซึ่งเกิดจาก order ที่ส่งแล้ว | child object ของ Order |
 
-## Rules ที่ยอมรับร่วมกันใน M1
+## Rules ที่ยอมรับร่วมกัน
 
 1. Table number และ quantity ต้องมากกว่า 0
 2. ชื่อรายการต้องไม่ว่าง และราคาต่อหน่วยต้องไม่ติดลบ

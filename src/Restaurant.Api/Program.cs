@@ -47,22 +47,30 @@ orders.MapPost("/{orderId:guid}/items", (Guid orderId, AddItemRequest request, O
         MenuItemId.From(request.MenuItemId),
         request.ItemName,
         Money.From(request.UnitPrice),
-        Quantity.From(request.Quantity)));
+        Quantity.From(request.Quantity),
+        request.Version));
 
     return Results.NoContent();
 });
 
-orders.MapDelete("/{orderId:guid}/items/{menuItemId:guid}", (Guid orderId, Guid menuItemId, OrderCommandService commands) =>
+orders.MapDelete("/{orderId:guid}/items/{menuItemId:guid}", (Guid orderId, Guid menuItemId, int? version, OrderCommandService commands) =>
 {
-    commands.RemoveItem(new RemoveOrderItem(OrderId.From(orderId), MenuItemId.From(menuItemId)));
+    commands.RemoveItem(new RemoveOrderItem(OrderId.From(orderId), MenuItemId.From(menuItemId), version));
 
     return Results.NoContent();
 });
 
-orders.MapPost("/{orderId:guid}/send-to-kitchen", (Guid orderId, OrderCommandService commands, IOutboxProcessor outbox) =>
+orders.MapPost("/{orderId:guid}/send-to-kitchen", (Guid orderId, SendToKitchenRequest? request, OrderCommandService commands, IOutboxProcessor outbox) =>
 {
-    commands.SendToKitchen(new SendOrderToKitchen(OrderId.From(orderId)));
-    outbox.ProcessPending();
+    commands.SendToKitchen(new SendOrderToKitchen(OrderId.From(orderId), request?.Version));
+    try
+    {
+        outbox.ProcessPending();
+    }
+    catch (Exception)
+    {
+        // The order and outbox message are already committed; retry is explicit.
+    }
 
     return Results.NoContent();
 });
@@ -71,6 +79,12 @@ orders.MapGet("/{orderId:guid}", (Guid orderId, OrderQueryService queries) =>
     Results.Ok(queries.Get(OrderId.From(orderId))));
 
 app.MapGet("/kitchen-board", (KitchenBoardQueryService queries) => Results.Ok(queries.Get()));
+
+app.MapPost("/outbox/process", (IOutboxProcessor outbox) =>
+{
+    outbox.ProcessPending();
+    return Results.NoContent();
+});
 
 app.Run();
 
@@ -85,7 +99,8 @@ static IResult ToProblem(Exception error) => error switch
         detail: error.Message,
         statusCode: StatusCodes.Status409Conflict,
         title: "Order was changed",
-        type: "https://restaurant.example/problems/order-concurrency"),
+        type: "https://restaurant.example/problems/order-concurrency",
+        extensions: new Dictionary<string, object?> { ["code"] = "order.concurrency" }),
     DomainRuleViolationException rule => Results.Problem(
         detail: rule.Message,
         statusCode: rule.Code == "order.item-name-required"
@@ -104,6 +119,8 @@ static IResult ToProblem(Exception error) => error switch
 
 public sealed record CreateOrderRequest(int TableNumber);
 
-public sealed record AddItemRequest(Guid MenuItemId, string ItemName, decimal UnitPrice, int Quantity);
+public sealed record AddItemRequest(Guid MenuItemId, string ItemName, decimal UnitPrice, int Quantity, int? Version = null);
+
+public sealed record SendToKitchenRequest(int? Version = null);
 
 public partial class Program;

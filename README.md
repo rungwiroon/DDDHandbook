@@ -1,6 +1,6 @@
 # DDD Restaurant Handbook
 
-The executable companion for the DDD Restaurant Handbook. It is intentionally at M0: a clean .NET 10 API, a Vue 3 client, SQLite for local persistence, and test projects. Restaurant behavior is introduced chapter by chapter.
+The executable companion for the DDD Restaurant Handbook: a .NET 10 API, Vue 3 client, SQLite persistence, Outbox reliability slice, and tests across domain, application, HTTP integration, and Vue UI states.
 
 ## Prerequisites
 
@@ -32,9 +32,9 @@ cd src/restaurant-web && npm install && npm run build && npm test
 
 ## Project layout
 
-- `Restaurant.Domain`: business model and Vogen value objects (introduced in later chapters)
+- `Restaurant.Domain`: business model and Vogen value objects
 - `Restaurant.Application`: use-case orchestration
-- `Restaurant.Infrastructure`: adapters such as EF Core persistence (introduced later)
+- `Restaurant.Infrastructure`: EF Core/SQLite persistence and Outbox adapters
 - `Restaurant.Api`: ASP.NET Core HTTP host
 - `restaurant-web`: Vue 3 + TypeScript client
 - `tests`: domain, application, and HTTP integration tests

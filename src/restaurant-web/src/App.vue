@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { appTitle } from './app-title'
 import { ref } from 'vue'
-import { restaurantApi, type KitchenTicket, type OrderDetail } from './api'
+import { restaurantApi, RestaurantApiError, type KitchenTicket, type OrderDetail } from './api'
 
 const sampleMenu = [
   { menuItemId: '00000000-0000-0000-0000-000000000001', itemName: 'Pad Thai', unitPrice: 85, quantity: 1 },
@@ -19,6 +19,17 @@ const loading = ref(false)
 const boardLoading = ref(false)
 const error = ref('')
 const boardError = ref('')
+
+async function showOrderError(cause: unknown) {
+  error.value = cause instanceof Error ? cause.message : 'The order could not be updated.'
+  if (cause instanceof RestaurantApiError && cause.code === 'order.concurrency' && order.value) {
+    try {
+      order.value = await restaurantApi.getOrder(order.value.orderId)
+    } catch {
+      // Keep the original conflict visible if refresh also fails.
+    }
+  }
+}
 
 async function startOrder() {
   if (selectedTable.value === null) {
@@ -42,10 +53,10 @@ async function addSampleItem(item: (typeof sampleMenu)[number]) {
   loading.value = true
   error.value = ''
   try {
-    await restaurantApi.addItem(order.value.orderId, item)
+    await restaurantApi.addItem(order.value.orderId, item, order.value.version)
     order.value = await restaurantApi.getOrder(order.value.orderId)
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Could not add item.'
+    await showOrderError(cause)
   } finally {
     loading.value = false
   }
@@ -56,11 +67,11 @@ async function sendOrder() {
   loading.value = true
   error.value = ''
   try {
-    await restaurantApi.sendToKitchen(order.value.orderId)
+    await restaurantApi.sendToKitchen(order.value.orderId, order.value.version)
     order.value = await restaurantApi.getOrder(order.value.orderId)
     await refreshBoard()
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Could not send order.'
+    await showOrderError(cause)
   } finally {
     loading.value = false
   }

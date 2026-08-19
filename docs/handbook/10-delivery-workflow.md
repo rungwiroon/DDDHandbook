@@ -1,6 +1,6 @@
 # 10 — Delivery Workflow: จาก Story สู่ Demo
 
-DDD ไม่จบที่ model ที่สวย; ทีมต้องส่งมอบ vertical slice ที่คนร้านใช้และตรวจได้. Kanban card จึงต้องบอก business goal, boundary, acceptance criteria และเจ้าของงานข้าม role—not just “ทำ API” หรือ “ทำหน้า”.
+DDD ไม่จบที่ model ที่สวย; ทีมต้องส่งมอบ vertical slice ที่คนร้านใช้และตรวจได้. Kanban card จึงต้องบอก business goal, boundary, acceptance criteria และเจ้าของงานข้าม role ไม่ใช่แค่ “ทำ API” หรือ “ทำหน้า”.
 
 ## Story template สำหรับ SA
 
@@ -67,7 +67,7 @@ flowchart LR
   V --> D["Demo + update handbook"]
 ```
 
-Backend และ Frontend เริ่มคู่กันได้หลัง contract ชัด: Frontend ใช้ mock/read DTO ได้ชั่วคราว แต่ห้ามเปลี่ยน business rule เองเพื่อรอ API. หาก acceptance criterion เปลี่ยนระหว่างทำ ให้กลับไป update Story ก่อน—not silently patch UI or endpoint.
+Backend และ Frontend เริ่มคู่กันได้หลัง contract ชัด: Frontend ใช้ mock/read DTO ได้ชั่วคราว แต่ห้ามเปลี่ยน business rule เองเพื่อรอ API. หาก acceptance criterion เปลี่ยนระหว่างทำ ให้กลับไป update Story ก่อน ไม่แก้ UI หรือ endpoint เงียบ ๆ.
 
 ## Checkpoint
 

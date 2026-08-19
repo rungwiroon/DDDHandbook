@@ -292,6 +292,48 @@ public sealed class OrderEndpointsTests(SqliteWebApplicationFactory factory) : I
         Assert.Throws<OrderConcurrencyException>(() => secondRepository.Save(secondOrder));
     }
 
+    [Fact]
+    public async Task Stale_http_version_returns_concurrency_problem_and_preserves_first_write()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        var initial = await client.GetFromJsonAsync<JsonElement>($"/orders/{orderId}");
+        var version = initial.GetProperty("version").GetInt32();
+
+        var first = await AddItemWithVersion(client, orderId, "Pad Thai", version);
+        var stale = await AddItemWithVersion(client, orderId, "Green Curry", version);
+
+        Assert.Equal(HttpStatusCode.NoContent, first.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+        using var problem = JsonDocument.Parse(await stale.Content.ReadAsStringAsync());
+        Assert.Equal("order.concurrency", problem.RootElement.GetProperty("code").GetString());
+
+        var detail = await client.GetFromJsonAsync<JsonElement>($"/orders/{orderId}");
+        Assert.Equal("Pad Thai", detail.GetProperty("lines")[0].GetProperty("itemName").GetString());
+        Assert.Single(detail.GetProperty("lines").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Stale_delete_version_returns_concurrency_problem()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        var menuItemId = Guid.NewGuid();
+        await client.PostAsJsonAsync($"/orders/{orderId}/items", new
+        {
+            menuItemId,
+            itemName = "Pad Thai",
+            unitPrice = 85m,
+            quantity = 1,
+        });
+
+        var response = await client.DeleteAsync($"/orders/{orderId}/items/{menuItemId}?version=0");
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("order.concurrency", problem.RootElement.GetProperty("code").GetString());
+    }
+
     private static async Task<Guid> CreateOrder(HttpClient client)
     {
         var response = await client.PostAsJsonAsync("/orders", new { tableNumber = 1 });
@@ -307,6 +349,16 @@ public sealed class OrderEndpointsTests(SqliteWebApplicationFactory factory) : I
             itemName,
             unitPrice = 85.00m,
             quantity = 1,
+        });
+
+    private static Task<HttpResponseMessage> AddItemWithVersion(HttpClient client, Guid orderId, string itemName, int version) =>
+        client.PostAsJsonAsync($"/orders/{orderId}/items", new
+        {
+            menuItemId = Guid.NewGuid(),
+            itemName,
+            unitPrice = 85.00m,
+            quantity = 1,
+            version,
         });
 
     private static async Task<string?> ReadErrorCode(HttpResponseMessage response)

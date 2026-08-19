@@ -14,7 +14,7 @@ Ordering เป็นเจ้าของการตัดสินใจว�
 
 ## Aggregate contract: Order
 
-`Order` เป็น transaction boundary ของ M1:
+`Order` เป็น transaction boundary ของ Ordering:
 
 - `Create(orderId, tableNumber)` สร้าง Draft order
 - `AddItem(menuItemId, itemName, unitPrice, quantity)` เพิ่มหรือรวม line
@@ -49,6 +49,10 @@ When the waiter sends it to kitchen
 Then the order changes to SentToKitchen
 
 Given a sent order
-When the waiter tries to add or remove a line
+When the waiter tries to add a line
+Then the operation is rejected
+
+Given a sent order
+When the waiter tries to remove a line
 Then the operation is rejected
 ```

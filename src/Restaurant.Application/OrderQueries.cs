@@ -14,7 +14,8 @@ public sealed record OrderDetailDto(
     int TableNumber,
     string Status,
     IReadOnlyList<OrderLineDto> Lines,
-    decimal Total);
+    decimal Total,
+    int Version);
 
 public sealed class OrderQueryService(IOrderRepository orders)
 {
@@ -31,7 +32,8 @@ public sealed class OrderQueryService(IOrderRepository orders)
                 line.UnitPrice.Value,
                 line.Quantity.Value,
                 line.Subtotal.Value)).ToArray(),
-            order.Total.Value);
+            order.Total.Value,
+            order.Version);
     }
 }
 

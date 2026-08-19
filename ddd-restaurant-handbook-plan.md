@@ -86,7 +86,7 @@ Domain หลัก:
 
 | Milestone | สิ่งที่พัฒนา | ผ่านเมื่อ |
 |---|---|---|
-| M0: Bootstrap | solution, Vue app, test project, local Postgres, basic CI | รัน test, API และ Vue ได้จากเครื่องใหม่ |
+| M0: Bootstrap | solution, Vue app, test project, local SQLite, basic CI | รัน test, API และ Vue ได้จากเครื่องใหม่ |
 | M1: Pure Domain | `Order`, `OrderLine`, value objects, invariants | domain tests ครอบคลุม draft order flow |
 | M2: Command API | command handler, repository abstraction, HTTP API | สร้าง/แก้/ส่ง Order ผ่าน API ได้ |
 | M3: Kitchen Event | event, `KitchenTicket`, kitchen board query | ส่ง Order แล้วครัวเห็น ticket |

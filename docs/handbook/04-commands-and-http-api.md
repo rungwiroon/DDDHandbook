@@ -38,6 +38,8 @@ Content-Type: application/json
 
 `itemName` และ `unitPrice` เป็น snapshot ตอนรับ order. หากเพิ่ม `menuItemId` เดิมอีกครั้ง aggregate รวมเฉพาะ quantity และเก็บ name/price snapshot ของ line เดิมไว้.
 
+`GET /orders/{orderId}` คืน `version` ของ order. Vue ส่งค่านี้เป็น `version` ใน request ที่แก้ order หรือส่งครัว (สำหรับ `DELETE` ใช้ query `?version={n}`) เพื่อป้องกันการเขียนทับจากหน้าจอที่อ่านข้อมูลเก่า; client เก่าที่ไม่มี `version` ยังใช้ flow เดิมได้ใน lab นี้.
+
 ## Business error contract
 
 Request ที่ JSON ไม่ถูกต้อง, path/query parameter parse ไม่ได้ หรือ Value Object validation ไม่ผ่านเป็น `400 Bad Request`. Order ที่ไม่พบเป็น `404 Not Found`. Domain rule violation ต้องตอบ Problem Details ที่ machine-readable โดยไม่เปิด implementation detail:
@@ -59,6 +61,7 @@ Request ที่ JSON ไม่ถูกต้อง, path/query parameter pars
 | `order.empty` | `409 Conflict` | แจ้งให้เพิ่มอย่างน้อยหนึ่งรายการ |
 | `order.line-not-found` | `409 Conflict` | refresh order เพราะรายการอาจถูกลบไปแล้ว |
 | `order.item-name-required` | `422 Unprocessable Content` | ชี้ validation ที่ชื่อรายการ |
+| `order.concurrency` | `409 Conflict` | reload order แล้วให้ผู้ใช้ตัดสินใจจากข้อมูลล่าสุด |
 
 Validation ใน Vue มีไว้เพื่อ feedback ที่เร็วขึ้นเท่านั้น. API ต้องคืน error contract เดียวกันเมื่อถูกเรียกตรง ๆ และ Application ต้องไม่แปลง domain error เป็น `500`.
 
