@@ -8,7 +8,7 @@ flowchart LR
   O -->|"OrderSentToKitchen (บท 5)"| K["Kitchen\nKitchenTicket aggregate"]
 ```
 
-Ordering เป็นเจ้าของการตัดสินใจว่า order ไหนพร้อมส่งครัว. Kitchen เป็นเจ้าของคิวและสถานะการเตรียมอาหาร. จึงไม่ควรให้ `Order` ถือ `KitchenTicket` เป็น object graph เดียวกัน แม้ทั้งคู่จะถูกเก็บใน PostgreSQL เดียวใน modular monolith.
+Ordering เป็นเจ้าของการตัดสินใจว่า order ไหนพร้อมส่งครัว. Kitchen เป็นเจ้าของคิวและสถานะการเตรียมอาหาร. จึงไม่ควรให้ `Order` ถือ `KitchenTicket` เป็น object graph เดียวกัน แม้ทั้งคู่จะถูกเก็บใน SQLite database เดียวใน modular monolith.
 
 ตอนเพิ่มรายการ Ordering รับเพียง `MenuItemId`, ชื่อ และราคาที่เป็น snapshot ณ เวลาสั่ง. `Order` ไม่ถือ `MenuItem` และไม่ย้อนกลับไปอ่านราคาปัจจุบันจาก Menu Catalog เพราะ order เดิมต้องเก็บข้อตกลงที่เกิดขึ้นแล้ว.
 

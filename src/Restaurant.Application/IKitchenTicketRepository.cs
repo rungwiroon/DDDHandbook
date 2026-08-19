@@ -9,4 +9,6 @@ public interface IKitchenTicketRepository
     IReadOnlyCollection<KitchenTicket> All();
 
     void Add(KitchenTicket ticket);
+
+    void Save(KitchenTicket ticket);
 }

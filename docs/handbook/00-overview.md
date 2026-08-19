@@ -19,7 +19,7 @@ MVP จบที่ waiter ส่ง order ที่ถูกต้องเข�
 
 - `Restaurant.Domain` — model และ business rules; อ้างอิงได้เฉพาะ BCL กับ Vogen
 - `Restaurant.Application` — command/query orchestration ในบทถัดไป
-- `Restaurant.Infrastructure` — EF Core, PostgreSQL และ Outbox ในบทหลัง
+- `Restaurant.Infrastructure` — EF Core, SQLite และ Outbox ในบทหลัง
 - `Restaurant.Api` — ASP.NET Core HTTP API
 - `restaurant-web` — Vue 3 + TypeScript + Vite
 

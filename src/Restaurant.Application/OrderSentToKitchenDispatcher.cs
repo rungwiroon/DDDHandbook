@@ -8,7 +8,9 @@ public sealed class OrderSentToKitchenDispatcher(IKitchenTicketRepository kitche
     {
         if (domainEvent is OrderSentToKitchen sent)
         {
-            kitchenTickets.Add(KitchenTicket.Create(sent));
+            var ticket = KitchenTicket.Create(sent);
+            kitchenTickets.Add(ticket);
+            kitchenTickets.Save(ticket);
             return;
         }
 

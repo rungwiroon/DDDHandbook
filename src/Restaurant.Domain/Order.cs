@@ -31,6 +31,21 @@ public sealed class Order
 
     public static Order Create(OrderId id, TableNumber tableNumber) => new(id, tableNumber);
 
+    public static Order Rehydrate(
+        OrderId id,
+        TableNumber tableNumber,
+        OrderStatus status,
+        IEnumerable<OrderLineData> lines)
+    {
+        var order = new Order(id, tableNumber) { Status = status };
+        order._lines.AddRange(lines.Select(line => new OrderLine(
+            line.MenuItemId,
+            line.ItemName,
+            line.UnitPrice,
+            line.Quantity)));
+        return order;
+    }
+
     public void AddItem(MenuItemId menuItemId, string itemName, Money unitPrice, Quantity quantity)
     {
         EnsureDraft();

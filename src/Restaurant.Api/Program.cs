@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Restaurant.Application;
 using Restaurant.Domain;
 using Restaurant.Infrastructure;
@@ -6,12 +7,15 @@ using Vogen;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<IOrderRepository, InMemoryOrderRepository>();
-builder.Services.AddSingleton<IKitchenTicketRepository, InMemoryKitchenTicketRepository>();
-builder.Services.AddSingleton<IDomainEventDispatcher, OrderSentToKitchenDispatcher>();
-builder.Services.AddSingleton<OrderCommandService>();
-builder.Services.AddSingleton<OrderQueryService>();
-builder.Services.AddSingleton<KitchenBoardQueryService>();
+builder.Services.AddDbContext<RestaurantDbContext>(options => options.UseSqlite(
+    builder.Configuration.GetConnectionString("Restaurant")
+    ?? throw new InvalidOperationException("ConnectionStrings:Restaurant is required.")));
+builder.Services.AddScoped<IOrderRepository, EfOrderRepository>();
+builder.Services.AddScoped<IKitchenTicketRepository, EfKitchenTicketRepository>();
+builder.Services.AddScoped<IDomainEventDispatcher, OrderSentToKitchenDispatcher>();
+builder.Services.AddScoped<OrderCommandService>();
+builder.Services.AddScoped<OrderQueryService>();
+builder.Services.AddScoped<KitchenBoardQueryService>();
 
 var app = builder.Build();
 

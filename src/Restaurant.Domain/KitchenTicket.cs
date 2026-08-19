@@ -19,4 +19,10 @@ public sealed class KitchenTicket
 
     public static KitchenTicket Create(OrderSentToKitchen sent) =>
         new(sent.OrderId, sent.TableNumber, sent.Lines);
+
+    public static KitchenTicket Rehydrate(
+        OrderId orderId,
+        TableNumber tableNumber,
+        IEnumerable<OrderLineSnapshot> lines) =>
+        new(orderId, tableNumber, [.. lines]);
 }

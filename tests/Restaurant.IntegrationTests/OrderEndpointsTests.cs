@@ -7,7 +7,7 @@ using Restaurant.Application;
 
 namespace Restaurant.IntegrationTests;
 
-public sealed class OrderEndpointsTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class OrderEndpointsTests(SqliteWebApplicationFactory factory) : IClassFixture<SqliteWebApplicationFactory>
 {
     [Fact]
     public async Task Get_health_returns_ok()
@@ -98,7 +98,7 @@ public sealed class OrderEndpointsTests(WebApplicationFactory<Program> factory) 
         var response = await client.PostAsync($"/orders/{orderId}/send-to-kitchen", null);
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-        var tickets = factory.Services.GetRequiredService<IKitchenTicketRepository>().All();
+        var tickets = factory.ReadTickets();
         var ticket = Assert.Single(tickets, ticket => ticket.OrderId.Value == orderId);
         Assert.Single(ticket.Lines);
     }
@@ -108,12 +108,12 @@ public sealed class OrderEndpointsTests(WebApplicationFactory<Program> factory) 
     {
         using var client = factory.CreateClient();
         var orderId = await CreateOrder(client);
-        var ticketsBefore = factory.Services.GetRequiredService<IKitchenTicketRepository>().All().Count;
+        var ticketsBefore = factory.ReadTickets().Count;
 
         var response = await client.PostAsync($"/orders/{orderId}/send-to-kitchen", null);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
-        Assert.Equal(ticketsBefore, factory.Services.GetRequiredService<IKitchenTicketRepository>().All().Count);
+        Assert.Equal(ticketsBefore, factory.ReadTickets().Count);
     }
 
     [Fact]
@@ -166,6 +166,26 @@ public sealed class OrderEndpointsTests(WebApplicationFactory<Program> factory) 
         Assert.Equal(1, ticket.GetProperty("tableNumber").GetInt32());
         Assert.Equal("Pad Thai", ticket.GetProperty("lines")[0].GetProperty("itemName").GetString());
         Assert.Equal(1, ticket.GetProperty("lines")[0].GetProperty("quantity").GetInt32());
+    }
+
+    [Fact]
+    public async Task Order_and_ticket_are_readable_after_a_new_client_scope()
+    {
+        Guid orderId;
+        using (var firstClient = factory.CreateClient())
+        {
+            orderId = await CreateOrder(firstClient);
+            await AddItem(firstClient, orderId, "Pad Thai");
+            Assert.Equal(HttpStatusCode.NoContent,
+                (await firstClient.PostAsync($"/orders/{orderId}/send-to-kitchen", null)).StatusCode);
+        }
+
+        using var secondClient = factory.CreateClient();
+        var detail = await secondClient.GetFromJsonAsync<JsonElement>($"/orders/{orderId}");
+        var board = await secondClient.GetFromJsonAsync<JsonElement>("/kitchen-board");
+
+        Assert.Equal("SentToKitchen", detail.GetProperty("status").GetString());
+        Assert.Contains(board.EnumerateArray(), ticket => ticket.GetProperty("orderId").GetGuid() == orderId);
     }
 
     private static async Task<Guid> CreateOrder(HttpClient client)
