@@ -126,6 +126,48 @@ public sealed class OrderEndpointsTests(WebApplicationFactory<Program> factory) 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Order_detail_returns_a_read_dto_without_domain_object_shape()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        await AddItem(client, orderId, "Pad Thai");
+
+        var detail = await client.GetFromJsonAsync<JsonElement>($"/orders/{orderId}");
+
+        Assert.Equal(orderId, detail.GetProperty("orderId").GetGuid());
+        Assert.Equal(1, detail.GetProperty("tableNumber").GetInt32());
+        Assert.Equal("Draft", detail.GetProperty("status").GetString());
+        Assert.Equal("Pad Thai", detail.GetProperty("lines")[0].GetProperty("itemName").GetString());
+        Assert.Equal(85m, detail.GetProperty("total").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Unknown_order_detail_returns_not_found()
+    {
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync($"/orders/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Kitchen_board_returns_ticket_read_models()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        await AddItem(client, orderId, "Pad Thai");
+        await client.PostAsync($"/orders/{orderId}/send-to-kitchen", null);
+
+        var board = await client.GetFromJsonAsync<JsonElement>("/kitchen-board");
+        var ticket = board.EnumerateArray().Single(ticket => ticket.GetProperty("orderId").GetGuid() == orderId);
+
+        Assert.Equal(1, ticket.GetProperty("tableNumber").GetInt32());
+        Assert.Equal("Pad Thai", ticket.GetProperty("lines")[0].GetProperty("itemName").GetString());
+        Assert.Equal(1, ticket.GetProperty("lines")[0].GetProperty("quantity").GetInt32());
+    }
+
     private static async Task<Guid> CreateOrder(HttpClient client)
     {
         var response = await client.PostAsJsonAsync("/orders", new { tableNumber = 1 });

@@ -10,6 +10,8 @@ builder.Services.AddSingleton<IOrderRepository, InMemoryOrderRepository>();
 builder.Services.AddSingleton<IKitchenTicketRepository, InMemoryKitchenTicketRepository>();
 builder.Services.AddSingleton<IDomainEventDispatcher, OrderSentToKitchenDispatcher>();
 builder.Services.AddSingleton<OrderCommandService>();
+builder.Services.AddSingleton<OrderQueryService>();
+builder.Services.AddSingleton<KitchenBoardQueryService>();
 
 var app = builder.Build();
 
@@ -58,6 +60,11 @@ orders.MapPost("/{orderId:guid}/send-to-kitchen", (Guid orderId, OrderCommandSer
 
     return Results.NoContent();
 });
+
+orders.MapGet("/{orderId:guid}", (Guid orderId, OrderQueryService queries) =>
+    Results.Ok(queries.Get(OrderId.From(orderId))));
+
+app.MapGet("/kitchen-board", (KitchenBoardQueryService queries) => Results.Ok(queries.Get()));
 
 app.Run();
 
