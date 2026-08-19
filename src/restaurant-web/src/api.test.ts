@@ -22,4 +22,10 @@ describe('restaurantApi', () => {
 
     await expect(restaurantApi.getKitchenBoard()).resolves.toHaveLength(1)
   })
+
+  test('falls back to the HTTP status when an error is not JSON', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('service unavailable', { status: 503 })))
+
+    await expect(restaurantApi.getKitchenBoard()).rejects.toThrow('Request failed (503)')
+  })
 })

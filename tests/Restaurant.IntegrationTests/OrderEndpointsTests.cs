@@ -89,6 +89,26 @@ public sealed class OrderEndpointsTests(SqliteWebApplicationFactory factory) : I
     }
 
     [Fact]
+    public async Task Blank_item_name_returns_problem_details_with_business_code()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        var response = await client.PostAsJsonAsync($"/orders/{orderId}/items", new
+        {
+            menuItemId = Guid.NewGuid(),
+            itemName = " ",
+            unitPrice = 85m,
+            quantity = 1,
+        });
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("order.item-name-required", problem.RootElement.GetProperty("code").GetString());
+        Assert.Equal("Order item name is required.", problem.RootElement.GetProperty("detail").GetString());
+        Assert.Equal("https://restaurant.example/problems/order-item-name-required", problem.RootElement.GetProperty("type").GetString());
+    }
+
+    [Fact]
     public async Task Sending_a_populated_order_creates_exactly_one_kitchen_ticket()
     {
         using var client = factory.CreateClient();
@@ -201,6 +221,10 @@ public sealed class OrderEndpointsTests(SqliteWebApplicationFactory factory) : I
         var context = scope.ServiceProvider.GetRequiredService<Restaurant.Infrastructure.RestaurantDbContext>();
 
         var pending = Assert.Single(context.Outbox.Where(message => message.ProcessedUtc == null));
+        Assert.Equal(nameof(Restaurant.Domain.OrderSentToKitchen), pending.Type);
+        using var payload = JsonDocument.Parse(pending.Payload);
+        Assert.Equal(orderId, payload.RootElement.GetProperty("OrderId").GetGuid());
+        Assert.Equal("Pad Thai", payload.RootElement.GetProperty("Lines")[0].GetProperty("ItemName").GetString());
         Assert.Null(scope.ServiceProvider.GetRequiredService<IKitchenTicketRepository>().Find(Restaurant.Domain.OrderId.From(orderId)));
 
         scope.ServiceProvider.GetRequiredService<IOutboxProcessor>().ProcessPending();
