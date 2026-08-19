@@ -5,3 +5,5 @@ TestResults/
 src/restaurant-web/node_modules/
 src/restaurant-web/dist/
 src/restaurant-web/*.tsbuildinfo
+restaurant.db
+src/Restaurant.Api/restaurant.db

@@ -8,6 +8,28 @@ ERD ตอบว่า “ข้อมูลใดสัมพันธ์กั
 | Domain model | `Order.SendToKitchen()` ปฏิเสธ order ว่าง | เปลี่ยนสถานะได้เมื่อไร |
 | Read model | kitchen board แสดงเฉพาะงานที่ต้องทำ | UI ต้องอ่านอะไรเร็ว |
 
+## จาก ERD สู่ domain boundary
+
+ERD อาจวาดความสัมพันธ์เป็น `orders 1 ── * order_lines` และ `kitchen_tickets.order_id` ได้ถูกต้อง แต่เส้น foreign key ไม่ได้บอกว่าใครเป็นเจ้าของกฎหรือ transaction. ภาพเดียวกันเมื่อมองแบบ DDD ต้องแยก ownership ให้เห็น:
+
+```mermaid
+flowchart LR
+  subgraph O[Ordering boundary]
+    ORDER[Order aggregate]
+    LINE[OrderLine]
+    ORDER -->|owns 1..*| LINE
+  end
+
+  subgraph K[Kitchen boundary]
+    TICKET[KitchenTicket aggregate]
+  end
+
+  MENU[Menu Catalog\nMenuItem] -. id, name, price snapshot .-> ORDER
+  ORDER -->|OrderSentToKitchen\nOrderId| TICKET
+```
+
+`OrderLine` อยู่ภายใน `Order` เพราะต้องเปลี่ยนผ่าน behavior ของ `Order`. ส่วน `KitchenTicket` เป็น aggregate ของ Kitchen: มันรับเพียง fact จาก event และอ้าง order ด้วย `OrderId` ไม่ใช่ child หรือ navigation property ของ `Order`. หาก persistence เลือกใช้ foreign key เพื่อ integrity, constraint นั้นไม่ย้าย business ownership ข้าม boundary.
+
 ## เมื่อ primitive มีความหมายทางธุรกิจ ให้สร้าง Value Object
 
 Developer มักเริ่มด้วย method หน้าตาแบบนี้:

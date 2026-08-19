@@ -9,6 +9,14 @@ The executable companion for the DDD Restaurant Handbook: a .NET 10 API, Vue 3 c
 
 ## Run
 
+Apply the SQLite migrations once before starting the API. The API deliberately does not change the database schema at startup:
+
+```sh
+dotnet ef database update \
+  --project src/Restaurant.Infrastructure \
+  --startup-project src/Restaurant.Api
+```
+
 Run the API (health check at `http://localhost:5000/health`):
 
 ```sh
@@ -22,6 +30,8 @@ cd src/restaurant-web
 npm install
 npm run dev
 ```
+
+If `POST /orders` returns `500` on a new local setup, stop the API and run the migration command above. An empty `restaurant.db` has no tables until migrations are applied.
 
 ## Test and build
 
