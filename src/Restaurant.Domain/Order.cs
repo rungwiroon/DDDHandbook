@@ -23,6 +23,8 @@ public sealed class Order
 
     public OrderStatus Status { get; private set; }
 
+    public int Version { get; private set; }
+
     public IReadOnlyList<OrderLine> Lines => _lines.AsReadOnly();
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.ToArray();
@@ -35,9 +37,10 @@ public sealed class Order
         OrderId id,
         TableNumber tableNumber,
         OrderStatus status,
-        IEnumerable<OrderLineData> lines)
+        IEnumerable<OrderLineData> lines,
+        int version = 0)
     {
-        var order = new Order(id, tableNumber) { Status = status };
+        var order = new Order(id, tableNumber) { Status = status, Version = version };
         order._lines.AddRange(lines.Select(line => new OrderLine(
             line.MenuItemId,
             line.ItemName,

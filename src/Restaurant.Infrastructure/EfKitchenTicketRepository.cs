@@ -15,7 +15,13 @@ public sealed class EfKitchenTicketRepository(RestaurantDbContext db) : IKitchen
     public IReadOnlyCollection<KitchenTicket> All() => db.KitchenTickets.AsNoTracking().Include(ticket => ticket.Lines)
         .AsEnumerable().Select(ToDomain).ToArray();
 
-    public void Add(KitchenTicket ticket) => db.KitchenTickets.Add(ToRecord(ticket));
+    public void Add(KitchenTicket ticket)
+    {
+        if (!db.KitchenTickets.Any(existing => existing.OrderId == ticket.OrderId.Value))
+        {
+            db.KitchenTickets.Add(ToRecord(ticket));
+        }
+    }
 
     public void Save(KitchenTicket ticket) => db.SaveChanges();
 

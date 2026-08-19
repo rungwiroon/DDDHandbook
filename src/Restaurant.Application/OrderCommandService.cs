@@ -5,12 +5,9 @@ namespace Restaurant.Application;
 public sealed class OrderCommandService
 {
     private readonly IOrderRepository _orders;
-    private readonly IDomainEventDispatcher _events;
-
-    public OrderCommandService(IOrderRepository orders, IDomainEventDispatcher events)
+    public OrderCommandService(IOrderRepository orders)
     {
         _orders = orders;
-        _events = events;
     }
 
     public void Create(CreateOrder command)
@@ -36,11 +33,8 @@ public sealed class OrderCommandService
     {
         var order = GetOrder(command.OrderId);
         order.SendToKitchen();
-        _orders.Save(order);
-        foreach (var domainEvent in order.DequeueDomainEvents())
-        {
-            _events.Dispatch(domainEvent);
-        }
+        _orders.Save(order, order.DomainEvents);
+        order.DequeueDomainEvents();
     }
 
     private Order GetOrder(OrderId orderId) =>

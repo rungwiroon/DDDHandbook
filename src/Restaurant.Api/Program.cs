@@ -16,6 +16,7 @@ builder.Services.AddScoped<IDomainEventDispatcher, OrderSentToKitchenDispatcher>
 builder.Services.AddScoped<OrderCommandService>();
 builder.Services.AddScoped<OrderQueryService>();
 builder.Services.AddScoped<KitchenBoardQueryService>();
+builder.Services.AddScoped<IOutboxProcessor, EfOutboxProcessor>();
 
 var app = builder.Build();
 
@@ -58,9 +59,10 @@ orders.MapDelete("/{orderId:guid}/items/{menuItemId:guid}", (Guid orderId, Guid 
     return Results.NoContent();
 });
 
-orders.MapPost("/{orderId:guid}/send-to-kitchen", (Guid orderId, OrderCommandService commands) =>
+orders.MapPost("/{orderId:guid}/send-to-kitchen", (Guid orderId, OrderCommandService commands, IOutboxProcessor outbox) =>
 {
     commands.SendToKitchen(new SendOrderToKitchen(OrderId.From(orderId)));
+    outbox.ProcessPending();
 
     return Results.NoContent();
 });
@@ -79,6 +81,11 @@ static IResult ToProblem(Exception error) => error switch
         statusCode: StatusCodes.Status404NotFound,
         title: "Order was not found",
         type: "https://restaurant.example/problems/order-not-found"),
+    OrderConcurrencyException => Results.Problem(
+        detail: error.Message,
+        statusCode: StatusCodes.Status409Conflict,
+        title: "Order was changed",
+        type: "https://restaurant.example/problems/order-concurrency"),
     DomainRuleViolationException rule => Results.Problem(
         detail: rule.Message,
         statusCode: rule.Code == "order.item-name-required"

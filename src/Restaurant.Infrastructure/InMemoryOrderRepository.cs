@@ -11,7 +11,7 @@ public sealed class InMemoryOrderRepository : IOrderRepository
 
     public void Add(Order order) => _orders.Add(order.Id, order);
 
-    public void Save(Order order)
+    public void Save(Order order, IReadOnlyCollection<IDomainEvent>? events = null)
     {
     }
 }

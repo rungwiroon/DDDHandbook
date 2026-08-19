@@ -9,7 +9,7 @@ public sealed class OrderCommandServiceTests
     public void Add_item_loads_changes_and_saves_the_order()
     {
         var repository = new FakeOrderRepository();
-        var service = new OrderCommandService(repository, new RecordingDispatcher(() => true));
+        var service = new OrderCommandService(repository);
         var orderId = OrderId.From(Guid.NewGuid());
 
         service.Create(new CreateOrder(orderId, TableNumber.From(1)));
@@ -28,18 +28,17 @@ public sealed class OrderCommandServiceTests
     [Fact]
     public void Command_for_an_unknown_order_is_rejected()
     {
-        var service = new OrderCommandService(new FakeOrderRepository(), new RecordingDispatcher(() => true));
+        var service = new OrderCommandService(new FakeOrderRepository());
 
         Assert.Throws<OrderNotFoundException>(() =>
             service.SendToKitchen(new SendOrderToKitchen(OrderId.From(Guid.NewGuid()))));
     }
 
     [Fact]
-    public void Send_dispatches_the_event_only_after_save()
+    public void Send_saves_the_order_with_its_domain_event()
     {
         var repository = new RecordingOrderRepository();
-        var dispatcher = new RecordingDispatcher(() => repository.WasSaved);
-        var service = new OrderCommandService(repository, dispatcher);
+        var service = new OrderCommandService(repository);
         var orderId = OrderId.From(Guid.NewGuid());
         service.Create(new CreateOrder(orderId, TableNumber.From(1)));
         service.AddItem(new AddItemToOrder(
@@ -51,8 +50,7 @@ public sealed class OrderCommandServiceTests
 
         service.SendToKitchen(new SendOrderToKitchen(orderId));
 
-        Assert.True(dispatcher.WasCalledAfterSave);
-        Assert.Single(dispatcher.Events);
+        Assert.True(repository.WasSaved);
     }
 
     private sealed class FakeOrderRepository : IOrderRepository
@@ -65,7 +63,7 @@ public sealed class OrderCommandServiceTests
 
         public void Add(Order order) => _orders.Add(order.Id, order);
 
-        public void Save(Order order) => SaveCount++;
+        public void Save(Order order, IReadOnlyCollection<IDomainEvent>? events = null) => SaveCount++;
     }
 
     private sealed class RecordingOrderRepository : IOrderRepository
@@ -78,19 +76,7 @@ public sealed class OrderCommandServiceTests
 
         public void Add(Order order) => _orders.Add(order.Id, order);
 
-        public void Save(Order order) => WasSaved = true;
+        public void Save(Order order, IReadOnlyCollection<IDomainEvent>? events = null) => WasSaved = true;
     }
 
-    private sealed class RecordingDispatcher(Func<bool> wasSaved) : IDomainEventDispatcher
-    {
-        public List<IDomainEvent> Events { get; } = [];
-
-        public bool WasCalledAfterSave { get; private set; }
-
-        public void Dispatch(IDomainEvent domainEvent)
-        {
-            WasCalledAfterSave = wasSaved();
-            Events.Add(domainEvent);
-        }
-    }
 }

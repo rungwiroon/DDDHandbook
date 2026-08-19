@@ -8,6 +8,8 @@ public sealed class RestaurantDbContext(DbContextOptions<RestaurantDbContext> op
 
     public DbSet<KitchenTicketRecord> KitchenTickets => Set<KitchenTicketRecord>();
 
+    public DbSet<OutboxRecord> Outbox => Set<OutboxRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<OrderRecord>(entity =>
@@ -15,6 +17,7 @@ public sealed class RestaurantDbContext(DbContextOptions<RestaurantDbContext> op
             entity.HasKey(order => order.Id);
             entity.Property(order => order.TableNumber).IsRequired();
             entity.Property(order => order.Status).IsRequired();
+            entity.Property(order => order.Version).IsConcurrencyToken().IsRequired();
             entity.HasMany(order => order.Lines)
                 .WithOne()
                 .HasForeignKey(line => line.OrderId)
@@ -43,6 +46,14 @@ public sealed class RestaurantDbContext(DbContextOptions<RestaurantDbContext> op
             entity.HasKey(line => new { line.OrderId, line.MenuItemId });
             entity.Property(line => line.ItemName).IsRequired();
         });
+
+        modelBuilder.Entity<OutboxRecord>(entity =>
+        {
+            entity.HasKey(message => message.Id);
+            entity.Property(message => message.Type).IsRequired();
+            entity.Property(message => message.Payload).IsRequired();
+            entity.Property(message => message.OccurredUtc).IsRequired();
+        });
     }
 }
 
@@ -51,7 +62,17 @@ public sealed class OrderRecord
     public Guid Id { get; set; }
     public int TableNumber { get; set; }
     public int Status { get; set; }
+    public int Version { get; set; }
     public List<OrderLineRecord> Lines { get; set; } = [];
+}
+
+public sealed class OutboxRecord
+{
+    public Guid Id { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public string Payload { get; set; } = string.Empty;
+    public DateTime OccurredUtc { get; set; }
+    public DateTime? ProcessedUtc { get; set; }
 }
 
 public sealed class OrderLineRecord

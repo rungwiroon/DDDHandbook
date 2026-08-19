@@ -8,5 +8,5 @@ public interface IOrderRepository
 
     void Add(Order order);
 
-    void Save(Order order);
+    void Save(Order order, IReadOnlyCollection<IDomainEvent>? events = null);
 }

@@ -11,7 +11,7 @@ public sealed class InMemoryKitchenTicketRepository : IKitchenTicketRepository
 
     public IReadOnlyCollection<KitchenTicket> All() => _tickets.Values.ToArray();
 
-    public void Add(KitchenTicket ticket) => _tickets.Add(ticket.OrderId, ticket);
+    public void Add(KitchenTicket ticket) => _tickets.TryAdd(ticket.OrderId, ticket);
 
     public void Save(KitchenTicket ticket)
     {

@@ -188,6 +188,86 @@ public sealed class OrderEndpointsTests(SqliteWebApplicationFactory factory) : I
         Assert.Contains(board.EnumerateArray(), ticket => ticket.GetProperty("orderId").GetGuid() == orderId);
     }
 
+    [Fact]
+    public async Task Send_persists_pending_outbox_then_processor_marks_it_after_ticket_creation()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        await AddItem(client, orderId, "Pad Thai");
+
+        using var scope = factory.Services.CreateScope();
+        var commands = scope.ServiceProvider.GetRequiredService<OrderCommandService>();
+        commands.SendToKitchen(new SendOrderToKitchen(Restaurant.Domain.OrderId.From(orderId)));
+        var context = scope.ServiceProvider.GetRequiredService<Restaurant.Infrastructure.RestaurantDbContext>();
+
+        var pending = Assert.Single(context.Outbox.Where(message => message.ProcessedUtc == null));
+        Assert.Null(scope.ServiceProvider.GetRequiredService<IKitchenTicketRepository>().Find(Restaurant.Domain.OrderId.From(orderId)));
+
+        scope.ServiceProvider.GetRequiredService<IOutboxProcessor>().ProcessPending();
+
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<IKitchenTicketRepository>().Find(Restaurant.Domain.OrderId.From(orderId)));
+        Assert.NotNull(context.Outbox.Single(message => message.Id == pending.Id).ProcessedUtc);
+    }
+
+    [Fact]
+    public async Task Duplicate_outbox_delivery_is_idempotent_by_order_id()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        await AddItem(client, orderId, "Pad Thai");
+
+        using var scope = factory.Services.CreateScope();
+        var commands = scope.ServiceProvider.GetRequiredService<OrderCommandService>();
+        commands.SendToKitchen(new SendOrderToKitchen(Restaurant.Domain.OrderId.From(orderId)));
+        var processor = scope.ServiceProvider.GetRequiredService<IOutboxProcessor>();
+        processor.ProcessPending();
+        processor.ProcessPending();
+
+        Assert.Single(scope.ServiceProvider.GetRequiredService<IKitchenTicketRepository>().All(), ticket => ticket.OrderId.Value == orderId);
+    }
+
+    [Fact]
+    public async Task Failed_outbox_delivery_stays_pending_for_retry()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        await AddItem(client, orderId, "Pad Thai");
+
+        using var scope = factory.Services.CreateScope();
+        var order = Restaurant.Domain.OrderId.From(orderId);
+        scope.ServiceProvider.GetRequiredService<OrderCommandService>().SendToKitchen(new SendOrderToKitchen(order));
+        var context = scope.ServiceProvider.GetRequiredService<Restaurant.Infrastructure.RestaurantDbContext>();
+        var failing = new Restaurant.Infrastructure.EfOutboxProcessor(context, new ThrowingDispatcher());
+
+        Assert.Throws<InvalidOperationException>(failing.ProcessPending);
+        Assert.Single(context.Outbox.Where(message => message.ProcessedUtc == null));
+
+        scope.ServiceProvider.GetRequiredService<IOutboxProcessor>().ProcessPending();
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<IKitchenTicketRepository>().Find(order));
+    }
+
+    [Fact]
+    public async Task Concurrent_order_updates_return_a_stable_concurrency_error()
+    {
+        using var client = factory.CreateClient();
+        var orderId = await CreateOrder(client);
+        await AddItem(client, orderId, "Pad Thai");
+
+        using var first = factory.Services.CreateScope();
+        using var second = factory.Services.CreateScope();
+        var firstRepository = first.ServiceProvider.GetRequiredService<IOrderRepository>();
+        var secondRepository = second.ServiceProvider.GetRequiredService<IOrderRepository>();
+        var firstOrder = firstRepository.Find(Restaurant.Domain.OrderId.From(orderId));
+        var secondOrder = secondRepository.Find(Restaurant.Domain.OrderId.From(orderId));
+        Assert.NotNull(firstOrder);
+        Assert.NotNull(secondOrder);
+        firstOrder.AddItem(Restaurant.Domain.MenuItemId.From(Guid.NewGuid()), "Iced Tea", Restaurant.Domain.Money.From(30), Restaurant.Domain.Quantity.From(1));
+        secondOrder.AddItem(Restaurant.Domain.MenuItemId.From(Guid.NewGuid()), "Green Curry", Restaurant.Domain.Money.From(95), Restaurant.Domain.Quantity.From(1));
+        firstRepository.Save(firstOrder);
+
+        Assert.Throws<OrderConcurrencyException>(() => secondRepository.Save(secondOrder));
+    }
+
     private static async Task<Guid> CreateOrder(HttpClient client)
     {
         var response = await client.PostAsJsonAsync("/orders", new { tableNumber = 1 });
@@ -209,5 +289,10 @@ public sealed class OrderEndpointsTests(SqliteWebApplicationFactory factory) : I
     {
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         return document.RootElement.GetProperty("code").GetString();
+    }
+
+    private sealed class ThrowingDispatcher : IDomainEventDispatcher
+    {
+        public void Dispatch(Restaurant.Domain.IDomainEvent domainEvent) => throw new InvalidOperationException("simulated dispatch failure");
     }
 }
