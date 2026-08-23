@@ -30,6 +30,20 @@ flowchart LR
 
 `OrderLine` อยู่ภายใน `Order` เพราะต้องเปลี่ยนผ่าน behavior ของ `Order`. ส่วน `KitchenTicket` เป็น aggregate ของ Kitchen: มันรับเพียง fact จาก event และอ้าง order ด้วย `OrderId` ไม่ใช่ child หรือ navigation property ของ `Order`. หาก persistence เลือกใช้ foreign key เพื่อ integrity, constraint นั้นไม่ย้าย business ownership ข้าม boundary.
 
+## Entity มี identity และ lifecycle
+
+Entity คือ object ที่ระบุตัวตนด้วย identity ไม่ใช่ค่าภายในเพียงอย่างเดียว. `Order` ที่มี `OrderId` เดิมยังเป็น order เดิม แม้เพิ่มรายการ เปลี่ยนสถานะ หรือยอดรวมเปลี่ยนไป. `MenuItem` และ `KitchenTicket` ก็เป็น Entity ด้วยเหตุผลเดียวกัน: มี identity และ lifecycle ของตัวเอง.
+
+`OrderLine` มี lifecycle อยู่ภายใต้ `Order` ใน model นี้ จึงไม่ควรถูกแก้หรือจัดการจากภายนอกโดยตรง แต่เปลี่ยนผ่าน behavior ของ `Order` เช่น `AddItem` และ `RemoveItem`.
+
+ต่างจาก Value Object ซึ่งเทียบกันด้วยค่า ไม่มี identity และควร immutable. ตัวอย่างเช่น `Money(100m)` สองค่าเท่ากันเมื่อจำนวนเงินเท่ากัน; การเปลี่ยนราคาให้สร้าง `Money` ค่าใหม่แทนการแก้ object เดิม.
+
+| Concept | ตัวอย่างใน handbook | ใช้ระบุตัวตนด้วย | การเปลี่ยนแปลง |
+|---|---|---|---|
+| Entity | `Order`, `MenuItem`, `KitchenTicket` | ID | เปลี่ยน state ได้ตลอด lifecycle |
+| Value Object | `Money`, `Quantity`, `TableNumber` | ค่า | สร้างค่าใหม่แทนการแก้ค่าเดิม |
+| Aggregate Root | `Order`, `KitchenTicket` | ID | เป็นทางเข้าควบคุม Entity ภายในและ invariant |
+
 ## เมื่อ primitive มีความหมายทางธุรกิจ ให้สร้าง Value Object
 
 Developer มักเริ่มด้วย method หน้าตาแบบนี้:

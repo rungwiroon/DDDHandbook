@@ -14,7 +14,7 @@ Ordering เป็นเจ้าของการตัดสินใจว�
 
 ## Aggregate contract: Order
 
-`Order` เป็น transaction boundary ของ Ordering:
+`Order` เป็นทั้ง Entity และ Aggregate Root: มี `OrderId` เป็น identity ของตัวเอง และเป็นจุดเดียวที่อนุญาตให้เปลี่ยน `OrderLine` เพื่อรักษา invariant ของ Ordering. ดังนั้น `Order` จึงเป็น transaction boundary ของ Ordering:
 
 - `Create(orderId, tableNumber)` สร้าง Draft order
 - `AddItem(menuItemId, itemName, unitPrice, quantity)` เพิ่มหรือรวม line
