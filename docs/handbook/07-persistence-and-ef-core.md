@@ -76,3 +76,18 @@ Then KitchenTicket is saved separately from Order
 ## Checkpoint
 
 `dotnet test Restaurant.sln` ต้องผ่านโดยไม่ต้องเปิด Docker. ให้ apply migration แล้ว restart API และยืนยันว่า `GET /orders/{id}` กับ `GET /kitchen-board` ยังอ่าน state เดิมจาก SQLite file ได้. จากนั้นจึงเริ่มบท 8 เพื่อทำ delivery ที่ทนต่อ failure.
+
+## มุมมอง SA: ความหมายและอายุของข้อมูล
+
+SA ควรทำ data dictionary ที่ระบุความหมาย แหล่งข้อมูล เวลาอ้างอิง และเจ้าของการเปลี่ยนข้อมูล ก่อนตรวจว่าตารางเก็บ field ครบหรือไม่:
+
+| ข้อมูล | ความหมายและแหล่งข้อมูลใน MVP | คำถามสำหรับภาคต่อ |
+|---|---|---|
+| TableNumber | หมายเลขโต๊ะที่เลือกตอนสร้าง Order; ใช้ผังตัวอย่างใน UI | ใครดูแลทะเบียนโต๊ะ และการย้ายโต๊ะกระทบ ticket อย่างไร |
+| ชื่อ/ราคาใน OrderLine | snapshot จาก command ตอนสร้าง line; Ordering เก็บข้อตกลงเดิม | ใครรับรองราคาจาก Menu Catalog ตามบท 04 |
+| รายการใน KitchenTicket | snapshot จาก event ตอนส่ง order; ไม่มีราคา | ข้อมูลใดจำเป็นต่อครัวเมื่อเพิ่ม modifiers |
+| Outbox message ในบท 08 | ข้อมูลเพื่อส่ง event อย่างทนต่อ failure | เก็บนานเท่าไร ล้างเมื่อใด และใช้สืบค้นปัญหาอย่างไร |
+
+Outbox ไม่ใช่ audit history ของการแก้ order ทุกครั้ง. หากธุรกิจต้องรู้ว่าใครเปลี่ยนอะไร เมื่อใด และเพราะเหตุใด ต้องเขียน audit requirement แยก; lab ยังไม่รับประกันข้อมูลเหล่านี้.
+
+**คำถามที่ SA ต้องตอบ:** ข้อมูลใดต้องเก็บย้อนหลังเพื่ออธิบายงาน, ใครเข้าถึงได้ และยอมสูญเสียข้อมูลได้เท่าไรเมื่อกู้คืน? Retention, audit และเป้าหมาย backup/restore เป็นเรื่องรอยืนยัน ไม่ควรอนุมานจากการมี SQLite หรือ Outbox.

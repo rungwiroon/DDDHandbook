@@ -45,3 +45,38 @@ Then the second client receives 409 with code "order.concurrency" and does not o
 ## Checkpoint
 
 Integration test ต้องพิสูจน์ว่า message ยังคง pending ก่อนถูก process, การ process ที่ล้มเหลว retry ได้, การส่งซ้ำ idempotent และ version เก่าตอบ HTTP `409` พร้อม `order.concurrency`. hosted worker หรือ external broker อาจเป็นผู้เรียก processor ในอนาคต แต่ตั้งใจอยู่นอกขอบเขตของบทนี้.
+
+## มุมมอง SA: recovery เป็นส่วนหนึ่งของ use case
+
+การ retry message เดิมไม่ใช่การให้ waiter ส่ง command ซ้ำ. MVP ปฏิเสธการส่ง order ที่ส่งแล้วด้วย `order.not-draft`; ส่วน processor รับ event เดิมซ้ำได้โดยไม่สร้าง ticket เพิ่ม. Idempotency ของ consumer ไม่ได้รับประกันว่า create/add-item HTTP request ซ้ำจะไม่มีผลซ้ำ.
+
+### ตัวอย่างผลลัพธ์: recovery scenario ของ MVP
+
+| เหตุการณ์ | หลักฐานที่ต้องตรวจ | การดำเนินการและผลที่ต้องได้ |
+|---|---|---|
+| ส่งได้ `204` แต่ processor ล้ม | Order เป็น SentToKitchen และ message ยัง pending; board ยังไม่พบ ticket ของ order | ผู้ดูแล lab แก้สาเหตุแล้วเรียก `POST /outbox/process`; refresh board แล้วพบ ticket หนึ่งใบ |
+| response หาย ไม่รู้ว่าส่งสำเร็จไหม | อ่าน Order ล่าสุดและ query ticket ด้วย OrderId | ถ้าส่งแล้วให้ติดตาม delivery; ถ้ายัง Draft ให้ตรวจรายการ/version ก่อนลองใหม่ ไม่สร้าง order ใหม่เพื่อทดแทนทันที |
+| message เดิมถูกประมวลผลซ้ำ | ticket ของ OrderId เดิม | ยังคงมี ticket ใบเดียว |
+| มีคนแก้ draft ก่อนเรา | ได้ `409` และ `order.concurrency` เมื่อส่ง version เก่า | reload และให้ waiter ตัดสินใจใหม่จากข้อมูลล่าสุด |
+
+การตรวจ pending message เป็นงานของผู้ดูแล/test ใน lab ไม่ใช่ความสามารถของหน้าจอ waiter. บท 04 ยังยอมรับ client ที่ไม่ส่ง version; ดังนั้น AC ป้องกันการแก้จากหน้าจอเก่าต้องระบุเงื่อนไขว่ามี version ไม่เหมารวมว่า client ทุกตัวได้รับการป้องกันแบบเดียวกัน.
+
+เพิ่ม acceptance scenario สำหรับ reliability contract เดิม:
+
+```gherkin
+Given a populated draft order and an outbox processor that fails after commit
+When the waiter sends the order to kitchen
+Then the API returns 204 and the order is SentToKitchen
+And its outbox message remains pending
+When the failure is resolved and the operator processes the outbox successfully
+Then one KitchenTicket exists for that order and the message is processed
+And refreshing the kitchen board shows that ticket
+```
+
+### คำถามที่ SA ต้องตอบก่อนนำไปใช้งานจริง
+
+- จากบันทึกการส่งถึงเห็น ticket ยอมให้ช้าเท่าไร และวัดจากจุดใดถึงจุดใด
+- ใครรับผิดชอบเมื่อเกินเวลาที่ตกลง ใครมีสิทธิ์ retry และต้องมีหลักฐานใดปิดปัญหา
+- หากต้องแจ้งครัวด้วยวิธีอื่นระหว่างระบบขัดข้อง จะกระทบยอดกับ ticket ที่มาภายหลังอย่างไรเพื่อไม่ทำอาหารซ้ำ
+
+เวลาที่ยอมรับได้, alert, ผู้รับผิดชอบจริง และวิธีทำงานสำรองยังเป็น **เรื่องรอยืนยันสำหรับภาคต่อ**. Lab ไม่มี worker retry อัตโนมัติหรือ SLA; ให้บันทึกเป้าหมาย วิธีวัด และผู้ยืนยันก่อนออกแบบกลไกเพิ่ม.

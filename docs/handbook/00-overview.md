@@ -40,7 +40,21 @@ MVP จบที่ waiter ส่ง order ที่ถูกต้องเข�
 | 08 | Reliability: Outbox, idempotency และ concurrency |
 | 09 | Testing strategy |
 | 10 | Delivery workflow |
+| 11 | DDD กับ AI-assisted coding |
 
 ## วิธีอ่าน
 
 แต่ละบทเรียงจาก scenario → language → modeling decision → lab → acceptance criteria. อย่าคัดลอกโค้ดโดยข้าม decision: test ของ domain คือ checkpoint ว่ากฎธุรกิจยังอยู่กับ aggregate ไม่ได้หลุดไปอยู่ใน API หรือ Vue.
+
+## เส้นทางการอ่านสำหรับ SA
+
+SA (System Analyst) ใช้กรณีศึกษาเดียวกันเพื่อฝึกค้นหา requirement, ยืนยันกฎกับคนร้าน และเชื่อมข้อตกลงไปถึงการตรวจรับ:
+
+| ช่วง | คำถามหลัก | ผลลัพธ์การวิเคราะห์ |
+|---|---|---|
+| [บท 01](01-domain-language.md)–[03](03-bounded-context-and-aggregate.md) | ใครต้องการอะไร กฎมาจากไหน ใครเป็นเจ้าของการตัดสินใจ | question log, decision table และ boundary |
+| [บท 04](04-commands-and-http-api.md)–[07](07-persistence-and-ef-core.md) | ใครทำได้ ข้อมูลมาจากไหน ผู้ใช้รู้ผลอย่างไร | permission matrix, data contract และ exception flow |
+| [บท 08](08-reliability-outbox-and-concurrency.md)–[10](10-delivery-workflow.md) | ล้มเหลวแล้วทำอย่างไร พิสูจน์และตรวจรับอย่างไร | recovery scenario, traceability และ UAT |
+| [บท 11](11-ddd-and-ai-assisted-coding.md) | ส่งต่อข้อตกลงให้ AI โดยไม่ให้เดากฎอย่างไร | task brief และ change impact |
+
+ส่วนมุมมอง SA แยก **ข้อตกลง MVP** ที่ handbook ใช้อยู่แล้ว ออกจาก **คำถามรอยืนยัน / ภาคต่อ**. ตัวอย่างผู้ยืนยันและแบบฟอร์มเป็นแนวทางฝึกวิเคราะห์ ไม่ใช่หลักฐานว่าได้สัมภาษณ์คนร้านจริง; ความสามารถที่ระบุว่าเป็นภาคต่อยังไม่ใช่ acceptance criteria ของ lab ปัจจุบัน.

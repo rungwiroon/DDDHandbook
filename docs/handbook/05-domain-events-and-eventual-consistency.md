@@ -70,3 +70,19 @@ And no additional KitchenTicket is created
 ## Checkpoint
 
 Domain test ต้องพิสูจน์ว่า successful transition raise event หนึ่งครั้ง และ rejected transition ไม่ raise. Application หรือ integration test ต้องพิสูจน์ว่า event ถูก handle หลัง save และสร้าง ticket เพียงหนึ่งใบ. `dotnet test Restaurant.sln` ต้องผ่านก่อนเริ่ม query และ Vue kitchen board.
+
+## มุมมอง SA: นิยามคำว่า “ส่งครัวสำเร็จ”
+
+แยกจุดสังเกตผลเพื่อไม่ให้ผู้ใช้กับทีมพัฒนาเข้าใจคำว่า success ต่างกัน:
+
+| จุดสังเกต | หลักฐาน | สิ่งที่ยังสรุปไม่ได้ |
+|---|---|---|
+| Ordering บันทึกการส่งแล้ว | Order เป็น `SentToKitchen` | Kitchen มี ticket แล้วหรือยัง |
+| Kitchen มีงานแล้ว | query พบ ticket ของ OrderId นั้น | คนครัวเห็นหรือเริ่มทำแล้วหรือยัง |
+| คนครัวยืนยันรับ/เริ่มทำ | ต้องมี use case และหลักฐานเพิ่มในภาคต่อ | MVP ยังไม่มีสถานะนี้ |
+
+ใน lab บทนี้ dispatcher ทำงานใน process และมี crash window ตามที่อธิบายไว้. เมื่อใช้ Outbox ในบท 08, `204` ของการส่งหมายถึง Order และข้อความส่งต่อถูก commit แล้ว แม้ processor ล้มและ ticket ยังไม่เกิด; จึงไม่ใช่หลักฐานว่าคนครัวรับงานแล้ว.
+
+**คำถามที่ SA ต้องตอบ:** ธุรกิจถือว่าจบงานเมื่อรับคำสั่งหรือเมื่อครัวเห็น ticket? หากสองเหตุการณ์ห่างกัน ผู้ใช้ต้องรู้อะไรและใครติดตาม? ใน MVP เป้าหมาย end-to-end ยังเป็น ticket ปรากฏบน board แต่ผลของ command กับผลของ delivery ต้องตรวจแยกกัน.
+
+**ตัวอย่างผลลัพธ์การวิเคราะห์:** แยก AC ส่ง order สำเร็จออกจาก AC สร้าง/อ่าน ticket และเพิ่มกรณี delivery ล้มเหลวตามบท 08. ไม่ต้องเพิ่มสถานะใหม่ให้ `Order` เพียงเพื่ออธิบายจุดสังเกตเหล่านี้.

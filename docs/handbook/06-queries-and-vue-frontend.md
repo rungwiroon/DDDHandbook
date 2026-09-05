@@ -125,3 +125,18 @@ Then the UI reloads the order before the waiter retries
 ## Checkpoint
 
 Integration test ต้องยืนยัน response ของ query ทั้ง order detail, unknown order และ empty/populated kitchen board. Vue component test ต้องยืนยัน loading, empty และ business-error state; `npm run build && npm test` และ `dotnet test Restaurant.sln` ต้องผ่านก่อนส่งมอบ frontend slice.
+
+## มุมมอง SA: ข้อความหน้าจอต้องตรงกับหลักฐาน
+
+เมื่อเรียนถึง Outbox ในบท 08 ต้องพิจารณากรณี Order ส่งแล้วแต่ board ยังไม่เห็น ticket ด้วย. ตารางนี้เป็น **ข้อเสนอสำหรับออกแบบ UI ภาคต่อ** ไม่ใช่ UI states ที่ lab บทนี้ implement ครบแล้ว:
+
+| สิ่งที่ตรวจพบ | ข้อความ/การกระทำที่ควรออกแบบ | ข้อมูลที่ต้องตกลงเพิ่ม |
+|---|---|---|
+| ส่งได้ `204` แต่ยังไม่พบ ticket | “บันทึกการส่งแล้ว ยังไม่พบงานบนกระดานครัว” และให้ refresh | จับคู่ ticket ด้วย OrderId; ไม่ตีความว่า delivery ล้มเหลวทันที |
+| พบ ticket ของ order | แสดงว่า “มีงานบนกระดานครัวแล้ว” | ไม่ใช้คำว่า “ครัวเริ่มทำแล้ว” หากไม่มีหลักฐาน |
+| request timeout จึงไม่รู้ผลส่ง | อ่าน Order และ board เพื่อยืนยันผลก่อนตัดสินใจส่งใหม่ | แยกผลไม่ทราบแน่ชัดออกจาก domain rejection |
+| ได้ `order.concurrency` | โหลดข้อมูลล่าสุดแล้วให้ผู้ใช้ตรวจรายการก่อนทำต่อ | จะอธิบายรายการที่เปลี่ยนอย่างไรโดยไม่เขียนทับเงียบ ๆ |
+
+board ที่โหลดล้มเหลวหรือยังไม่ refresh ไม่ได้พิสูจน์ว่า ticket ไม่มี. API ปัจจุบันยังไม่ได้ให้ delivery-status read model สำหรับแยก pending/failed; หากต้องการข้อความจำเพาะเหล่านั้น SA ต้องตกลงข้อมูลและ AC กับ Backend ก่อน.
+
+**คำถามที่ SA ต้องตอบ:** ผู้ใช้ต้องตัดสินใจอะไรในแต่ละ error, ต้องมีข้อมูลใดช่วยตัดสินใจ และควรขอความช่วยเหลือเมื่อใด? อย่าเสนอให้สร้าง order ใหม่เพื่อแก้ความไม่แน่ใจ เพราะอาจทำให้ครัวได้งานซ้ำ.
