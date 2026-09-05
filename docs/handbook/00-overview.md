@@ -41,6 +41,7 @@ MVP จบที่ waiter ส่ง order ที่ถูกต้องเข�
 | 09 | Testing strategy |
 | 10 | Delivery workflow |
 | 11 | DDD กับ AI-assisted coding |
+| 12 | [DDD กับ Functional Programming](12-ddd-and-functional-programming.md) |
 
 ## วิธีอ่าน
 
@@ -56,5 +57,6 @@ SA (System Analyst) ใช้กรณีศึกษาเดียวกัน
 | [บท 04](04-commands-and-http-api.md)–[07](07-persistence-and-ef-core.md) | ใครทำได้ ข้อมูลมาจากไหน ผู้ใช้รู้ผลอย่างไร | permission matrix, data contract และ exception flow |
 | [บท 08](08-reliability-outbox-and-concurrency.md)–[10](10-delivery-workflow.md) | ล้มเหลวแล้วทำอย่างไร พิสูจน์และตรวจรับอย่างไร | recovery scenario, traceability และ UAT |
 | [บท 11](11-ddd-and-ai-assisted-coding.md) | ส่งต่อข้อตกลงให้ AI โดยไม่ให้เดากฎอย่างไร | task brief และ change impact |
+| [บท 12](12-ddd-and-functional-programming.md) | เปลี่ยนรูปแบบ domain behavior เป็น functional แล้วยังรักษากฎเดิมอย่างไร | decision table, pure tests และขอบเขต side effects |
 
 ส่วนมุมมอง SA แยก **ข้อตกลง MVP** ที่ handbook ใช้อยู่แล้ว ออกจาก **คำถามรอยืนยัน / ภาคต่อ**. ตัวอย่างผู้ยืนยันและแบบฟอร์มเป็นแนวทางฝึกวิเคราะห์ ไม่ใช่หลักฐานว่าได้สัมภาษณ์คนร้านจริง; ความสามารถที่ระบุว่าเป็นภาคต่อยังไม่ใช่ acceptance criteria ของ lab ปัจจุบัน.
